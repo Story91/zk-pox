@@ -1,0 +1,7 @@
+rust/target/
+solana/target/
+node_modules/
+dist/
+*.so
+*.dylib
+*.dll

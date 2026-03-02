@@ -1,0 +1,21 @@
+[package]
+name = "zk-pox"
+version = "0.1.0"
+edition = "2021"
+description = "ZK-PoX on-chain experience credential program"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "zk_pox"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.30"
+
+[dev-dependencies]

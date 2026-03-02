@@ -1,0 +1,103 @@
+[skill]
+name = "zk-pox"
+description = "Zero-Knowledge Proof-of-Experience — generate and verify private location credentials"
+version = "0.1.0"
+author = "0x01 Protocol Team"
+tags = ["zkp", "location", "privacy", "credentials", "depin", "geo"]
+
+[[tools]]
+name = "prove_attendance"
+description = "Generate a ZK proof that the agent attended a location for a minimum duration"
+kind = "shell"
+command = "echo '{\"action\":\"generate_proof\",\"claim_type\":\"ATTENDANCE\",\"center_lat\":{{lat}},\"center_lng\":{{lng}},\"radius_m\":{{radius}},\"time_start\":{{start}},\"time_end\":{{end}},\"min_count\":{{min_points}}}'"
+
+[tools.args]
+lat = "Center latitude of the venue (e.g. 39.7392)"
+lng = "Center longitude of the venue (e.g. -104.9903)"
+radius = "Radius in meters around the venue (e.g. 500)"
+start = "Unix timestamp for event start"
+end = "Unix timestamp for event end"
+min_points = "Minimum GPS points required (e.g. 6)"
+
+[[tools]]
+name = "prove_residency"
+description = "Generate a ZK proof of living near a location for N nights in a period"
+kind = "shell"
+command = "echo '{\"action\":\"generate_proof\",\"claim_type\":\"RESIDENCY\",\"center_lat\":{{lat}},\"center_lng\":{{lng}},\"radius_m\":{{radius}},\"time_start\":{{start}},\"time_end\":{{end}},\"min_count\":{{min_nights}},\"night_only\":true}'"
+
+[tools.args]
+lat = "Center latitude of home area"
+lng = "Center longitude of home area"
+radius = "Radius in meters (e.g. 200)"
+start = "Unix timestamp for period start"
+end = "Unix timestamp for period end"
+min_nights = "Minimum nights required (e.g. 25)"
+
+[[tools]]
+name = "prove_stability"
+description = "Generate a ZK proof that location variance stayed below threshold over a period (DePIN coverage)"
+kind = "shell"
+command = "echo '{\"action\":\"generate_proof\",\"claim_type\":\"STABILITY\",\"center_lat\":0,\"center_lng\":0,\"radius_m\":{{max_deviation}},\"time_start\":{{start}},\"time_end\":{{end}},\"min_count\":{{min_points}}}'"
+
+[tools.args]
+max_deviation = "Maximum allowed deviation in meters from centroid (e.g. 1000)"
+start = "Unix timestamp for period start"
+end = "Unix timestamp for period end"
+min_points = "Minimum GPS points in the period"
+
+[[tools]]
+name = "prove_travel"
+description = "Generate a ZK proof of visiting N distinct regions during a period (nomad DAO)"
+kind = "shell"
+command = "echo '{\"action\":\"generate_proof\",\"claim_type\":\"TRAVEL\",\"center_lat\":0,\"center_lng\":0,\"radius_m\":{{cluster_radius}},\"time_start\":{{start}},\"time_end\":{{end}},\"min_count\":{{min_regions}}}'"
+
+[tools.args]
+cluster_radius = "Radius for clustering regions in meters (e.g. 50000)"
+start = "Unix timestamp for period start"
+end = "Unix timestamp for period end"
+min_regions = "Minimum distinct regions required (e.g. 3)"
+
+[[tools]]
+name = "prove_absence"
+description = "Generate a ZK proof of NOT being at a location during a period (geo-exclusion)"
+kind = "shell"
+command = "echo '{\"action\":\"generate_proof\",\"claim_type\":\"ABSENCE\",\"center_lat\":{{lat}},\"center_lng\":{{lng}},\"radius_m\":{{radius}},\"time_start\":{{start}},\"time_end\":{{end}},\"min_count\":{{min_outside}}}'"
+
+[tools.args]
+lat = "Center latitude of exclusion zone"
+lng = "Center longitude of exclusion zone"
+radius = "Exclusion zone radius in meters"
+start = "Unix timestamp for period start"
+end = "Unix timestamp for period end"
+min_outside = "Minimum GPS points required outside zone"
+
+[[tools]]
+name = "check_spoof_risk"
+description = "Analyze GPS data for spoofing indicators (teleportation, zero-noise, impossible velocity)"
+kind = "shell"
+command = "echo '{\"action\":\"analyze_spoof\",\"days\":{{days}}}'"
+
+[tools.args]
+days = "Number of days of GPS history to analyze (e.g. 30)"
+
+[[prompts]]
+prompt = """You are a ZK-PoX proof assistant for the 0x01 network. You help users generate 
+zero-knowledge location proofs from their GPS history. 
+
+When a user asks to prove something about their location, map their request to one of these proof types:
+- ATTENDANCE: "I was at [place] for [duration]" → prove_attendance
+- RESIDENCY: "I live near [place]" or "I stayed at [place] for N nights" → prove_residency  
+- STABILITY: "I've been consistently in [area]" or "My coverage is stable" → prove_stability
+- TRAVEL: "I visited N different places" or "I traveled to [places]" → prove_travel
+- ABSENCE: "I was NOT at [place]" or "I stayed away from [place]" → prove_absence
+
+Before generating proofs, always check spoof risk first with check_spoof_risk.
+If the verdict is "LikelySpoofed", warn the user and refuse to generate proofs.
+
+Natural language mapping examples:
+- "Prove I attended ETH Denver" → prove_attendance(lat=39.7392, lng=-104.9903, radius=500, ...)
+- "Prove I live in Warsaw Mokotow" → prove_residency(lat=52.1935, lng=21.0355, radius=2000, ...)
+- "Prove my DePIN coverage is stable" → prove_stability(max_deviation=1000, ...)
+- "Prove I visited 3 DAO cities" → prove_travel(min_regions=3, ...)
+- "Prove I wasn't near the office last week" → prove_absence(...)
+"""

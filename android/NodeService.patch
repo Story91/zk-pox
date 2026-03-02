@@ -1,0 +1,40 @@
+# NodeService.kt — ZK-PoX GPS Logger Integration
+
+## What to change
+
+File: `mobile/android/app/src/main/java/world/zerox1/node/NodeService.kt`
+
+### 1. Add fields (after line ~78, alongside `private var phoneBridge`)
+
+```kotlin
+private var gpsLogger: GpsLogger? = null
+private var gpsDatabase: GpsDatabase? = null
+```
+
+### 2. Start logger in onCreate() (after wakeLock acquisition, ~line 92)
+
+```kotlin
+gpsDatabase = GpsDatabase(applicationContext)
+val identityKeyFile = java.io.File(filesDir, "zerox1-identity.key")
+if (identityKeyFile.exists()) {
+    val keyBytes = identityKeyFile.readBytes()
+    gpsLogger = GpsLogger(applicationContext, keyBytes, gpsDatabase!!)
+    gpsLogger?.start()
+}
+```
+
+### 3. Stop logger in onDestroy() (after phoneBridge?.stop(), ~line 157)
+
+```kotlin
+gpsLogger?.stop()
+gpsLogger = null
+gpsDatabase = null
+```
+
+### 4. Add dependency to build.gradle
+
+In `mobile/android/app/build.gradle`, add inside `dependencies { }`:
+
+```gradle
+implementation("com.google.android.gms:play-services-location:21.3.0")
+```
